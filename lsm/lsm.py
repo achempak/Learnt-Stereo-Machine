@@ -2,6 +2,8 @@ import torch
 from torch.utils.data import DataLoader
 import torchvision
 
+import numpy as np
+
 import kaolin
 from kaolin.datasets import shapenet
 
@@ -9,6 +11,8 @@ import models.grid_fusion
 import models.grid_reasoning
 import models.image_encoder
 import camera.unprojection
+from config import SHAPENET_IM, SHAPENET_VOX
+from shapenet_pytorch import ShapeNetDataset
 
 
 # hyperparameters for Grid Fusion model
@@ -20,7 +24,6 @@ num_layers = 2 # number of stacked hidden layer
 
 # create 3D feature grids from unprojection step
 batch_size = 10
-sequence_length = views = 6
 
 # Cuda/gpu setup
 use_gpu = torch.cuda.is_available()
@@ -32,45 +35,37 @@ else:
 
 
 ### DATALOADING
-class RandSampler(torch.utils.data.Sampler):
+nvox = 32
+vox_dir = SHAPENET_VOX[nvox]
+im_dir = SHAPENET_IM
+split_file = './splits.json'
+nviews = 4
 
-    def __init__(self, ordering):
-        self.ordering = ordering
+#dataset = ShapeNetDataset(im_dir, vox_dir, nviews, nvox, split_file, train=True, categories=['vessel', 'sofa'])
 
-    def __iter__(self):
-        return iter(self.ordering)
-    def __len__(self):
-        return len(self.ordering)
+dataset = ShapeNetDataset(im_dir, vox_dir, nviews, nvox, split_file, train=True)
+img, vol, K, R = dataset[0]
+print(len(dataset))
+print(img.shape)
+print(vol.shape)
+print(K.shape)
+print(R.shape)
 
-#meshes = shapenet.ShapeNet_Meshes(root=shapenet_dir, categories=['plane'])
-#categories=['plane', 'bench', 'cabinet', 'car', 'chair', 'monitor', 'lamp', 'speaker', 'rifle', 'sofa', 'table', 'phone', 'watercraft']
-
-### DIRECTORIES
-image_dir = '/data1/shapenet/ShapeNetRendering'
-shapenet_dir = '/data1/shapenet/ShapeNetCore.v1'
-
-### CATEGORIES
-categories = ['bench']
-
-### VOXELS
-voxels = shapenet.ShapeNet_Voxels(root=shapenet_dir, cache_dir='/data1/shapenet/.cache', categories=categories, train=True, split=0.7, resolutions=[128])
-
-### IMAGES
-imgs = shapenet.ShapeNet_Images(root=image_dir, categories=categories, train=True, split=0.7, transform=torchvision.transforms.Compose([torchvision.transforms.Resize(128), torchvision.transforms.ToTensor()]), views=views)
-
-### SAMPLER
-samp = RandSampler(torch.randperm(len(voxels)).tolist())
-
-train_img_loader = DataLoader(imgs, batch_size=batch_size, shuffle=False, num_workers=8, sampler=samp)
-train_vox_loader = DataLoader(voxels, batch_size=batch_size, shuffle=False, num_workers=8, sampler=samp)
+batch_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size)
 #### END DATALOADING
+
+
+
 
 # 2d unet
 image_enc = models.image_encoder.ImUnet()
 
 # unprojection
-grid_params = [128,128,128]
-img_shape = [137,137]
+grid_params = vol.shape[1:] #[128,128,128]
+img_shape = img.shape[-2:] #[137,137]
+
+print(grid_params)
+print(img_shape)
 # camera.unprojection.unproj_grid(grid_params, img_shape, feats, K, R)
 
 # Grid Fusion model
@@ -98,6 +93,30 @@ grid_reasoning = models.grid_reasoning.Modified3DUNet(in_channels=hidden_dim[-1]
 #final_grid = grid_reasoning(fused_feature_grid)
 #print("final_grid shape = ",final_grid.shape)
 
+
+for i, batch in enumerate(batch_loader):
+    print(batch[0].shape)
+    print(batch[1].shape)
+    print(batch[2].shape)
+    print(batch[3].shape)
+    print(len(batch))
+
+    imgs, vox, K, R = batch
+    K = K.view(-1, 3, 3)
+    R = R.view(-1, 3, 4)
+
+    img_feats = image_enc(imgs.view(-1,3, img_shape[0], img_shape[1] ))
+
+    print(img_feats.shape)
+    proj_feats = []
+    for j in range(len(img_feats)):
+
+        proj_feats.append(camera.unprojection.unproj_grid(grid_params, img_shape, img_feats[j], K[j], R[j]))
+    proj_feats = torch.stack(proj_feats)
+    print(proj_feats.shape)
+    break
+
+'''
 for i, (batch_vox, batch_img) in enumerate(zip(train_vox_loader,train_img_loader)):
     K = batch_img['data']['params']['cam_mat']
     R = batch_img['data']['params']['cam_pos']
@@ -115,7 +134,7 @@ for i, (batch_vox, batch_img) in enumerate(zip(train_vox_loader,train_img_loader
 
 
     break
-
+'''
 # Test the binary cross entropy loss on random voxel occupancy grid
 #loss_func = torch.nn.BCELoss()
 #rand_vox = torch.empty(batch_size,1,32,32,32).random_(2).to(device)
