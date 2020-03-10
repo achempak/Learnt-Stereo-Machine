@@ -105,8 +105,12 @@ for i, (batch_vox, batch_img) in enumerate(zip(train_vox_loader,train_img_loader
     print(img_inputs.shape)
     img_feats = image_enc(img_inputs.view(-1, 3, 128, 128))
     print(img_feats.shape)
-    img_feats = img_feats.view(batch_size, views,img_feats.shape[-3], img_feats.shape[-2], img_feats.shape[-1])
-    proj_feats = camera.unprojection.unproj_grid(grid_params, img_shape, img_feats, K, R)
+    #img_feats = img_feats.view(batch_size, views,img_feats.shape[-3], img_feats.shape[-2], img_feats.shape[-1])
+    K = K.view(-1, 3, 3)
+    R = R.view(-1,3)
+    for j in range(len(img_feats)):
+
+        proj_feats = camera.unprojection.unproj_grid(grid_params, img_shape, img_feats[j], K[j], R[j])
     print(proj_feats.shape)
 
 
