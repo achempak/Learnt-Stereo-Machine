@@ -17,7 +17,7 @@ from shapenet_pytorch import ShapeNetDataset
 
 # hyperparameters for Grid Fusion model
 height = width = depth = 32
-in_channels = 16
+in_channels = 32
 hidden_dim = [32, 12] # last hidden dim is output dim
 kernel_size = (3, 3, 3) # kernel size for two stacked hidden layer
 num_layers = 2 # number of stacked hidden layer
@@ -45,11 +45,6 @@ nviews = 4
 
 dataset = ShapeNetDataset(im_dir, vox_dir, nviews, nvox, split_file, train=True)
 img, vol, K, R = dataset[0]
-print(len(dataset))
-print(img.shape)
-print(vol.shape)
-print(K.shape)
-print(R.shape)
 
 batch_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size)
 #### END DATALOADING
@@ -64,8 +59,6 @@ image_enc = models.image_encoder.ImUnet()
 grid_params = vol.shape[1:] #[128,128,128]
 img_shape = img.shape[-2:] #[137,137]
 
-print(grid_params)
-print(img_shape)
 # camera.unprojection.unproj_grid(grid_params, img_shape, feats, K, R)
 
 # Grid Fusion model
@@ -95,46 +88,28 @@ grid_reasoning = models.grid_reasoning.Modified3DUNet(in_channels=hidden_dim[-1]
 
 
 for i, batch in enumerate(batch_loader):
-    print(batch[0].shape)
-    print(batch[1].shape)
-    print(batch[2].shape)
-    print(batch[3].shape)
-    print(len(batch))
 
     imgs, vox, K, R = batch
+    imgs = imgs.type(torch.FloatTensor)
+    vox = vox.type(torch.FloatTensor)
+    K = K.type(torch.FloatTensor)
+    R = R.type(torch.FloatTensor)
+
     K = K.view(-1, 3, 3)
     R = R.view(-1, 3, 4)
 
-    img_feats = image_enc(imgs.view(-1,3, img_shape[0], img_shape[1] ))
-
-    print(img_feats.shape)
+    img_feats = image_enc(imgs.view(-1,3, img_shape[0], img_shape[1] ).type(torch.FloatTensor))
     proj_feats = []
     for j in range(len(img_feats)):
-
         proj_feats.append(camera.unprojection.unproj_grid(grid_params, img_shape, img_feats[j], K[j], R[j]))
     proj_feats = torch.stack(proj_feats)
-    print(proj_feats.shape)
-    break
+    proj_feats = proj_feats.permute(0,2,1)
+    proj_feats = proj_feats.view(batch_size, nviews, proj_feats.shape[1], -1)
+    proj_feats = proj_feats.view(batch_size, nviews, proj_feats.shape[2], grid_params[0], grid_params[1], grid_params[2])
+    layer_output_list, last_state_list = grid_fusion(proj_feats)
+    fused_feature_grid = last_state_list[0]
+    final_grid = grid_reasoning(fused_feature_grid)
 
-'''
-for i, (batch_vox, batch_img) in enumerate(zip(train_vox_loader,train_img_loader)):
-    K = batch_img['data']['params']['cam_mat']
-    R = batch_img['data']['params']['cam_pos']
-    img_inputs = batch_img['data']['images'][:,:,0:3,:,:]
-    print(img_inputs.shape)
-    img_feats = image_enc(img_inputs.view(-1, 3, 128, 128))
-    print(img_feats.shape)
-    #img_feats = img_feats.view(batch_size, views,img_feats.shape[-3], img_feats.shape[-2], img_feats.shape[-1])
-    K = K.view(-1, 3, 3)
-    R = R.view(-1,3)
-    for j in range(len(img_feats)):
-
-        proj_feats = camera.unprojection.unproj_grid(grid_params, img_shape, img_feats[j], K[j], R[j])
-    print(proj_feats.shape)
-
-
-    break
-'''
 # Test the binary cross entropy loss on random voxel occupancy grid
 #loss_func = torch.nn.BCELoss()
 #rand_vox = torch.empty(batch_size,1,32,32,32).random_(2).to(device)
