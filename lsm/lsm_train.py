@@ -1,14 +1,10 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-import torchvision
 
 import numpy as np
 import os
 import time
-
-import kaolin
-from kaolin.datasets import shapenet
 
 from config import SHAPENET_IM, SHAPENET_VOX
 from shapenet_pytorch import ShapeNetDataset
