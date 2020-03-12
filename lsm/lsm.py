@@ -17,10 +17,9 @@ from shapenet_pytorch import ShapeNetDataset
 
 class LSM(nn.Module):
 
-    def __init__(self, nviews=4):
+    def __init__(self):
 
         super(LSM, self).__init__()
-        self.nviews = nviews
 
         # hyperparameters for Grid Fusion model
         height = width = depth = 32
@@ -30,7 +29,6 @@ class LSM(nn.Module):
         num_layers = 2 # number of stacked hidden layer
 
         # create 3D feature grids from unprojection step
-        self.batch_size = 10
 
         # Cuda/gpu setup
         use_gpu = torch.cuda.is_available()
@@ -78,14 +76,16 @@ class LSM(nn.Module):
     def forward(self, imgs, K, R):
 
 
+        batch_size = imgs.shape[0]
+        nviews = imgs.shape[1]
         img_feats = self.image_enc(imgs.view(-1,3, self.img_shape[0], self.img_shape[1] ))
         proj_feats = []
         for j in range(len(img_feats)):
             proj_feats.append(camera.unprojection.unproj_grid(self.grid_params, self.img_shape, img_feats[j], K[j], R[j], self.device))
         proj_feats = torch.stack(proj_feats)
         proj_feats = proj_feats.permute(0,2,1)
-        proj_feats = proj_feats.view(self.batch_size, self.nviews, proj_feats.shape[1], -1)
-        proj_feats = proj_feats.view(self.batch_size, self.nviews, proj_feats.shape[2], self.grid_params[0], self.grid_params[1], self.grid_params[2])
+        proj_feats = proj_feats.view(batch_size, nviews, proj_feats.shape[1], -1)
+        proj_feats = proj_feats.view(batch_size, nviews, proj_feats.shape[2], self.grid_params[0], self.grid_params[1], self.grid_params[2])
         layer_output_list, last_state_list = self.grid_fusion(proj_feats)
         fused_feature_grid = last_state_list[0]
         final_grid = self.grid_reasoning(fused_feature_grid)
