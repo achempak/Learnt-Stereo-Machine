@@ -34,14 +34,14 @@ class LSM(nn.Module):
 
         # Cuda/gpu setup
         use_gpu = torch.cuda.is_available()
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if use_gpu:
             dtype = torch.cuda.FloatTensor # computation in GPU
         else:
             dtype = torch.FloatTensor
 
         # 2d unet
-        self.image_enc = models.image_encoder.ImUnet()
+        self.image_enc = models.image_encoder.ImUnet().to(self.device)
 
         # unprojection
         self.grid_params = [32, 32, 32] #[128,128,128]
@@ -57,7 +57,7 @@ class LSM(nn.Module):
                         num_layers=num_layers,
                         dtype=dtype,
                         bias = True,
-                        return_all_layers = False).to(device)
+                        return_all_layers = False).to(self.device)
 
         #feature_grids = torch.rand(batch_size, sequence_length, in_channels, depth, height, width).type(dtype)  # (b,t,c,d,h,w)
         #print("batch of feature_grids shape = {} ({})".format(feature_grids.shape,'batch size, # of views, # in channels, depth, height, width'))
@@ -69,7 +69,7 @@ class LSM(nn.Module):
         #print("fused_feature_grid shape = ",fused_feature_grid.shape)
 
         # Run grid reasoning model
-        self.grid_reasoning = models.grid_reasoning.Modified3DUNet(in_channels=hidden_dim[-1], n_classes=1, base_n_filter = 2).to(device)
+        self.grid_reasoning = models.grid_reasoning.Modified3DUNet(in_channels=hidden_dim[-1], n_classes=1, base_n_filter = 1).to(self.device)
         #batch_size, in_channels, depth, height, width
         #final_grid = grid_reasoning(fused_feature_grid)
         #print("final_grid shape = ",final_grid.shape)
@@ -78,10 +78,10 @@ class LSM(nn.Module):
     def forward(self, imgs, K, R):
 
 
-        img_feats = self.image_enc(imgs.view(-1,3, self.img_shape[0], self.img_shape[1] ).type(torch.FloatTensor))
+        img_feats = self.image_enc(imgs.view(-1,3, self.img_shape[0], self.img_shape[1] ))
         proj_feats = []
         for j in range(len(img_feats)):
-            proj_feats.append(camera.unprojection.unproj_grid(self.grid_params, self.img_shape, img_feats[j], K[j], R[j]))
+            proj_feats.append(camera.unprojection.unproj_grid(self.grid_params, self.img_shape, img_feats[j], K[j], R[j], self.device))
         proj_feats = torch.stack(proj_feats)
         proj_feats = proj_feats.permute(0,2,1)
         proj_feats = proj_feats.view(self.batch_size, self.nviews, proj_feats.shape[1], -1)

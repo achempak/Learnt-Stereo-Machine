@@ -17,6 +17,8 @@ from shapenet_pytorch import ShapeNetDataset
 from lsm import LSM
 
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 ### DATALOADING
 nvox = 32
 vox_dir = SHAPENET_VOX[nvox]
@@ -38,15 +40,15 @@ lsm = LSM()
 for i, batch in enumerate(batch_loader):
 
     imgs, vox, K, R = batch
-    imgs = imgs.type(torch.FloatTensor)
-    vox = vox.type(torch.FloatTensor)
-    K = K.type(torch.FloatTensor)
-    R = R.type(torch.FloatTensor)
+    imgs = imgs.type(torch.FloatTensor).to(device)
+    vox = vox.type(torch.FloatTensor).to(device)
+    K = K.type(torch.FloatTensor).to(device)
+    R = R.type(torch.FloatTensor).to(device)
 
     K = K.view(-1, 3, 3)
     R = R.view(-1, 3, 4)
 
-    vox_prd = lsm(imgs, K, R)
+    vox_pred = lsm(imgs, K, R)
     print(vox_pred.shape)
 
 

@@ -1,7 +1,7 @@
 import torch
 
 
-def unproj_grid(grid_params, img_shape, feats, K, R):
+def unproj_grid(grid_params, img_shape, feats, K, R, device):
     #K = torch.stack((K, torch.zeros((3, 1))), dim=1)
     KR = torch.mm(K, R)
 
@@ -14,7 +14,7 @@ def unproj_grid(grid_params, img_shape, feats, K, R):
     grid_range = torch.linspace(grid_params[0], grid_params[1], grid_params[2])
     grid = torch.stack(torch.meshgrid([grid_range, grid_range, grid_range]))
     rs_grid = torch.reshape(grid, [3, -1])
-    rs_grid = torch.cat((rs_grid, torch.ones((1, grid_params[2]**3))), dim=0)
+    rs_grid = torch.cat((rs_grid, torch.ones((1, grid_params[2]**3))), dim=0).to(device)
 
     # Project grid
     im_p = torch.mm(KR, rs_grid)
