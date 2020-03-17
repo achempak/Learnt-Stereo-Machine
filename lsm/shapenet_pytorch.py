@@ -4,7 +4,10 @@ import numpy as np
 
 class ShapeNetDataset(torch.utils.data.Dataset):
 
-    def __init__(self, im_dir, vox_dir, nviews, nvox, split_file, train=True, categories=None):
+    def __init__(self, im_dir, vox_dir, nviews, nvox, split_file, train=True, categories=None, include_depth=False):
+        self.nviews = nviews
+        self.include_depth = include_depth
+
         self.data = ShapeNet(
             im_dir=im_dir,
             split_file=split_file,
@@ -28,10 +31,6 @@ class ShapeNetDataset(torch.utils.data.Dataset):
                     cat_smids.append(self.smids[i])
             self.smids = cat_smids
 
-
-
-        self.nviews = nviews
-
     def __len__(self):
         return len(self.smids)
 
@@ -47,4 +46,17 @@ class ShapeNetDataset(torch.utils.data.Dataset):
         imgs = np.moveaxis(imgs, -1, 1)
         vol = np.moveaxis(vol, -1, 0)
 
-        return imgs, vol, K, R
+        if self.include_depth:
+            depth = self.data.get_depth(sid, mid, view_idx)
+            depth = np.moveaxis(depth, -1, 1)
+            # depth maps are in the range 1.5 to 2.5 for object pixels and 10 for background
+            # setting background to 3 and then normalizing with range 1.5 to 3
+            depth_min = 1.5
+            depth_max = 10
+            depth[depth==depth_max] = 3
+            depth_max = 3
+            # normalize depth between 0 and 1
+            depth = (depth - depth_min) / (depth_max - depth_min)
+            return imgs, vol, K, R, depth
+        else:
+            return imgs, vol, K, R
