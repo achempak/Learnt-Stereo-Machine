@@ -17,7 +17,7 @@ from shapenet_pytorch import ShapeNetDataset
 
 class LSM(nn.Module):
 
-    def __init__(self):
+    def __init__(self, device):
 
         super(LSM, self).__init__()
 
@@ -31,12 +31,7 @@ class LSM(nn.Module):
         # create 3D feature grids from unprojection step
 
         # Cuda/gpu setup
-        use_gpu = torch.cuda.is_available()
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        if use_gpu:
-            dtype = torch.cuda.FloatTensor # computation in GPU
-        else:
-            dtype = torch.FloatTensor
+        self.device = device
 
         # 2d unet
         self.image_enc = models.image_encoder.ImUnet().to(self.device)
@@ -53,7 +48,7 @@ class LSM(nn.Module):
                         hidden_dim=hidden_dim,
                         kernel_size=kernel_size,
                         num_layers=num_layers,
-                        dtype=dtype,
+                        device=self.device,
                         bias = True,
                         return_all_layers = False).to(self.device)
 

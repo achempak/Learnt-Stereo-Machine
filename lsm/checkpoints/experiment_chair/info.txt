@@ -1,0 +1,1 @@
+classes = ['chair']nviews = 4

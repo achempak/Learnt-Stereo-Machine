@@ -10,7 +10,7 @@ from config import SHAPENET_IM, SHAPENET_VOX
 from shapenet_pytorch import ShapeNetDataset
 from lsm import LSM
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 ### TRAINING PARAMETERS
 epochs = 10
@@ -24,7 +24,9 @@ vox_dir = SHAPENET_VOX[nvox]
 im_dir = SHAPENET_IM
 split_file = './splits.json'
 
-categories = ['sofa']
+#{'airplane': '02691156', 'bench': '02828884', 'cabinet': '02933112', 'car': '02958343', 'chair': '03001627', 'display': '03211117', 'lamp': '03636649', 'loudspeaker': '03691459', 'rifle': '04090263', 'sofa': '04256520', 'table': '04379243', 'telephone': '04401088', 'vessel': '04530566'}
+#categories = ['vessel']
+categories = None
 dataset = ShapeNetDataset(im_dir, vox_dir, nviews, nvox, split_file, train=True, categories=categories)
 train_batch_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size)
 test_dataset = ShapeNetDataset(im_dir, vox_dir, nviews, nvox, split_file, train=False, categories=categories)
@@ -37,8 +39,14 @@ checkpoint_path = './checkpoints/experiment_{}'.format(str(int(time.time())))
 os.mkdir(checkpoint_path)
 checkpoint_file = os.path.join(checkpoint_path,'best_model.pth')
 
+info_file = open(os.path.join(checkpoint_path, 'info.txt'),'a')
+info_file.write('classes = {}'.format(str(categories)))
+info_file.write('nviews = {}'.format(nviews))
+info_file.close()
+
+
 # LSM model
-lsm = LSM()
+lsm = LSM(device)
 loss_func = torch.nn.BCELoss()
 optimizer = torch.optim.Adam(lsm.parameters(), lr=lr)
 

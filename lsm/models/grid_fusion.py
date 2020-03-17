@@ -7,7 +7,7 @@ from torch.autograd import Variable
 
 
 class ConvGRUCell(nn.Module):
-    def __init__(self, input_size, input_dim, hidden_dim, kernel_size, bias, dtype):
+    def __init__(self, input_size, input_dim, hidden_dim, kernel_size, bias, device):
         """
         Initialize the ConvLSTM cell
         :param input_size: (int, int)
@@ -20,15 +20,13 @@ class ConvGRUCell(nn.Module):
             Size of the convolutional kernel.
         :param bias: bool
             Whether or not to add the bias.
-        :param dtype: torch.cuda.FloatTensor or torch.FloatTensor
-            Whether or not to use cuda.
         """
         super(ConvGRUCell, self).__init__()
         self.depth, self.height, self.width = input_size
         self.padding = kernel_size[0] // 2, kernel_size[1] // 2, kernel_size[2] // 2
         self.hidden_dim = hidden_dim
         self.bias = bias
-        self.dtype = dtype
+        self.device = device
 
         self.conv_gates = nn.Conv3d(in_channels=input_dim + hidden_dim,
                                     out_channels=2*self.hidden_dim,  # for update_gate,reset_gate respectively
@@ -43,7 +41,7 @@ class ConvGRUCell(nn.Module):
                               bias=self.bias)
 
     def init_hidden(self, batch_size):
-        return (Variable(torch.zeros(batch_size, self.hidden_dim, self.depth, self.height, self.width)).type(self.dtype))
+        return (Variable(torch.zeros(batch_size, self.hidden_dim, self.depth, self.height, self.width)).to(self.device))
 
     def forward(self, input_tensor, h_cur):
         """
@@ -74,7 +72,7 @@ class ConvGRUCell(nn.Module):
 
 class ConvGRU(nn.Module):
     def __init__(self, input_size, input_dim, hidden_dim, kernel_size, num_layers,
-                 dtype, bias=True, return_all_layers=False):
+                 device, bias=True, return_all_layers=False):
         """
 
         :param input_size: (int, int)
@@ -87,8 +85,6 @@ class ConvGRU(nn.Module):
             Size of the convolutional kernel.
         :param num_layers: int
             Number of ConvLSTM layers
-        :param dtype: torch.cuda.FloatTensor or torch.FloatTensor
-            Whether or not to use cuda.
         :param alexnet_path: str
             pretrained alexnet parameters
         :param bias: bool
@@ -109,7 +105,7 @@ class ConvGRU(nn.Module):
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
         self.kernel_size = kernel_size
-        self.dtype = dtype
+        self.device = device
         self.num_layers = num_layers
         self.bias = bias
         self.return_all_layers = return_all_layers
@@ -122,7 +118,7 @@ class ConvGRU(nn.Module):
                                          hidden_dim=self.hidden_dim[i],
                                          kernel_size=self.kernel_size[i],
                                          bias=self.bias,
-                                         dtype=self.dtype))
+                                         device=self.device))
 
         # convert python list to pytorch module
         self.cell_list = nn.ModuleList(cell_list)

@@ -20,9 +20,9 @@ class ImUnet(nn.Module):
         self.conv_bn2 = nn.BatchNorm2d(64)
         self.conv_bn3 = nn.BatchNorm2d(128)
         self.conv_bn4 = nn.BatchNorm2d(256)
-        self.deconv_bn1 = nn.BatchNorm2d(128)
-        self.deconv_bn2 = nn.BatchNorm2d(64)
-        self.deconv_bn3 = nn.BatchNorm2d(32)
+        self.deconv_bn1 = nn.BatchNorm2d(256)
+        self.deconv_bn2 = nn.BatchNorm2d(128)
+        self.deconv_bn3 = nn.BatchNorm2d(64)
 
     def forward(self, image):
         x_conv_1 = self.conv_1(image)
