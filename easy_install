@@ -1,0 +1,8 @@
+mkdir deps
+cd deps
+wget "https://download.blender.org/release/Blender2.77/blender-2.77-linux-glibc211-x86_64.tar.bz2"
+tar -xjf blender-2.77-linux-glibc211-x86_64.tar.bz2
+rm blender-2.77-linux-glibc211-x86_64.tar.bz2
+cd ..
+pipenv install
+mkdir rendering/data
