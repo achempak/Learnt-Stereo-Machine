@@ -1,0 +1,1 @@
+classes = ['table']nviews = 4

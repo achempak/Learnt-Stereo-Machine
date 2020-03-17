@@ -1,0 +1,1 @@
+classes = ['loudspeaker']nviews = 4
