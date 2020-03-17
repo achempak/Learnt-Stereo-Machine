@@ -81,12 +81,18 @@ def plot_images(imgs, out_file=None):
 
 
 
-def voxel2pts(voxels, thresh=0.4, cmap='Oranges'):
+def voxel2pts(voxels, thresh=0.4, cmap='Oranges', type='BCE'):
     if voxels.ndim == 4:
         voxels = voxels.squeeze()
     elif voxels.ndim != 3:
         print('Invalid number of dimensions in voxel grid')
-    vox = (voxels > thresh).astype(np.int)
-    points = np.argwhere(vox > 0)
-    colors = array_to_color(voxels[vox > 0], cmap=cmap)
+    if type == 'BCE':
+        vox = (voxels > thresh).astype(np.int)
+        points = np.argwhere(vox > 0)
+        colors = array_to_color(voxels[vox > 0], cmap=cmap)
+    elif type == 'Chamfer':
+        points = voxels
+        #colors = array_to_color(points, cmap=cmap)
+        colors = None
+    print(points.shape)
     return points, colors

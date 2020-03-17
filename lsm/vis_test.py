@@ -17,6 +17,7 @@ print("imgs shape" + str(imgs.shape))
 print("imgs type" + str(type(imgs)))
 vol = vol.squeeze()
 pts, cols = voxel2pts(vol)
+print(pts.shape)
 display(plot_points(pts, cols, size=0.4, axis=False, title=None, html_out='test.html'))
 plot_images(imgs, 'test.png')
 

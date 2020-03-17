@@ -6,17 +6,20 @@ import numpy as np
 import os
 import time
 
+from kaolin.metrics.point import chamfer_distance
+
 from config import SHAPENET_IM, SHAPENET_VOX
 from shapenet_pytorch import ShapeNetDataset
 from lsm import LSM
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Device: "+str(device))
 
 ### TRAINING PARAMETERS
 epochs = 10
 lr = 0.0001
 nvox = 32
-batch_size = 20
+batch_size = 10
 nviews = 4
 
 ### DATALOADING
@@ -39,12 +42,13 @@ checkpoint_file = os.path.join(checkpoint_path,'best_model.pth')
 
 # LSM model
 lsm = LSM()
-loss_func = torch.nn.BCELoss()
+#loss_func = torch.nn.BCELoss()
+loss_func = chamfer_distance
 optimizer = torch.optim.Adam(lsm.parameters(), lr=lr)
 
 
 def train(lsm, epochs, lr, train_batch_loader, test_batch_loader):
-    best_loss = 1.0
+    best_loss = 100000000.0
     train_losses = []
     test_losses = []
     for epoch in range(epochs):
@@ -60,7 +64,18 @@ def train(lsm, epochs, lr, train_batch_loader, test_batch_loader):
 
             optimizer.zero_grad()
             vox_pred = lsm(imgs, K, R)
-            loss = loss_func(vox_pred, vox)
+            # print("vox_pred dims: "+str(vox_pred.shape))
+            # print("vox dims: "+str(vox.shape))
+            loss = torch.Tensor([0]).to(device)
+            while len(vox_pred.shape) < 5:
+                vox_pred.unsqueeze(0)
+            while len(vox.shape) < 5:
+                vox.unsqueeze(0)
+            size = vox_pred.shape[0]
+            for j in range(size):
+                loss += loss_func(vox_pred[j].squeeze().view((nvox, -1)), vox[j].squeeze().view((nvox, -1)))
+            loss /= size
+            #loss = loss_func(vox_pred, vox)
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
@@ -89,7 +104,15 @@ def test(test_batch_loader, lsm):
             R = R.view(-1, 3, 4)
 
             vox_pred = lsm(imgs, K, R)
-            loss = loss_func(vox_pred, vox)
+            loss = torch.Tensor([0]).to(device)
+            while len(vox_pred.shape) < 5:
+                vox_pred.unsqueeze(0)
+            while len(vox.shape) < 5:
+                vox.unsqueeze(0)
+            size = vox_pred.shape[0]
+            for j in range(size):
+                loss += loss_func(vox_pred[j].squeeze().view((nvox, -1)), vox[j].squeeze().view((nvox, -1)))
+            loss /= size
             running_loss += loss.item()
 
     return running_loss/len(test_batch_loader)
