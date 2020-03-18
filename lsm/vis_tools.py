@@ -10,7 +10,7 @@ from scipy.io import loadmat
 from scipy.ndimage.filters import median_filter
 from uuid import uuid4
 
-with open(os.path.join(sys.path[0], 'pyntcloud.js'), 'r') as f:
+with open('./pyntcloud.js', 'r') as f:
     TEMPLATE_POINTS = f.read()
 
 
