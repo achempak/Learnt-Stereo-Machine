@@ -4,4 +4,4 @@
 
 # Usage example:  bash render 02808440 3e9b4b309c9db612b0957d845ac33749 out
 
-../deps/blender-2.77-linux-glibc211-x86_64/blender blank.blend --background --python render.py -- data/$1/$2/model.obj $1 $2 viewpoints.txt $3
+../deps/blender-2.77-linux-glibc211-x86_64/blender blank.blend --background --python render_ShapeNet.py -- data/$1/$2/model.obj $1 $2 viewpoints.txt $3

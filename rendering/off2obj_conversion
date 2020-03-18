@@ -1,0 +1,18 @@
+cd data/ModelNet10/ModelNet10
+
+rm README.txt .DS_Store
+
+for CATEGORY in $(ls)
+do
+  cd $CATEGORY/train
+  
+  for OFF_FILE in $(ls *.off)
+  do
+    off2obj $OFF_FILE > "${OFF_FILE}_.obj"
+    rm $OFF_FILE
+  done
+  
+  cd ../..
+done
+
+cd ../..

@@ -1,0 +1,33 @@
+BLENDER_PATH="../../../../../../deps/blender-2.77-linux-glibc211-x86_64/blender"
+BLANK_PATH="../../../../../blank.blend"
+CODE_PATH="../../../../../render_ModelNet.py"
+VIEWPOINTS_PATH="../../../../../viewpoints.txt"
+
+#mkdir rendering_output
+
+cd data/ModelNet10/ModelNet10
+
+rm README.txt .DS_Store
+
+for CATEGORY in $(ls)
+do
+  cd $CATEGORY/train
+  
+  mkdir rendering_output
+  
+  for OFF_FILE in $(ls *.off)
+  do
+    FILE_NAME=$(basename -- "$OFF_FILE")
+    FILE_NAME="${FILE_NAME%.*}"
+    OBJ_FILE="${FILE_NAME}.obj"
+    off2obj $OFF_FILE > $OBJ_FILE
+    rm $OFF_FILE
+    $BLENDER_PATH $BLANK_PATH --background --python $CODE_PATH -- $OBJ_FILE $FILE_NAME "" $VIEWPOINTS_PATH "rendering_output/$CATEGORY"
+  done
+  
+  mv "rendering_output/$CATEGORY" ../../../../../rendering_output
+  rm -r rendering_output
+  cd ../..
+done
+
+cd ../..
