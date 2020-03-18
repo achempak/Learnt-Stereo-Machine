@@ -23,11 +23,11 @@ nviews = 4
 vox_dir = SHAPENET_VOX[nvox]
 im_dir = SHAPENET_IM
 split_file = './splits.json'
-
 categories = ['sofa']
 test_dataset = ShapeNetDataset(im_dir, vox_dir, nviews, nvox, split_file, train=False, categories=categories)
 
 imgs, vol, K, R = test_dataset[0]
+print("vol shape" + str(vol.shape))
 imgs_tensor = torch.Tensor(imgs).to(device)
 imgs_tensor = imgs_tensor.unsqueeze(0)
 K = torch.Tensor(K).to(device)
@@ -43,8 +43,13 @@ with torch.no_grad():
 vol_pred = vol_pred.squeeze()
 vol_pred = vol_pred.cpu().numpy()
 print("vox pred shape: "+str(vol_pred.shape))
+write_tensor(vol.squeeze(), 'test_true.txt')
+write_tensor(vol_pred, 'test_pred.txt')
+
 pts, cols = voxel2pts(vol_pred, type='Chamfer')
+pts_true, cols_true = voxel2pts(vol)
 display(plot_points(pts, cols, size=0.4, axis=False, title=None, html_out='eval_sofa.html'))
+display(plot_points(pts_true, cols_true, size=0.4, axis=False, title=None, html_out='true_sofa.html'))
 plot_images(imgs, 'eval_sofa.png')
 
 # Center outputs

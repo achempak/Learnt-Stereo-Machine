@@ -96,3 +96,15 @@ def voxel2pts(voxels, thresh=0.4, cmap='Oranges', type='BCE'):
         colors = None
     print(points.shape)
     return points, colors
+
+def write_tensor(tensor, out_file=None):
+    Path('vis/tensors').mkdir(parents=True, exist_ok=True)
+    if out_file is None:
+        out_file = os.path.join('vis/tensors/',str(uuid4())+'.txt')
+    else:
+        out_file = os.path.join('vis/tensors/',out_file)
+    with open(out_file, 'w') as f:
+        f.write('# Array shape: {0}\n'.format(tensor.shape))
+        for slice in tensor:
+            np.savetxt(f, slice, fmt='%-7.2f')
+            f.write('# New slice\n')
