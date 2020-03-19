@@ -12,6 +12,7 @@ from kaolin.conversions.voxelgridconversions import voxelgrid_to_pointcloud
 from config import SHAPENET_IM, SHAPENET_VOX
 from shapenet_pytorch import ShapeNetDataset
 from lsm import LSM
+from utils import voxel_to_cloud
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Device: "+str(device))
@@ -70,8 +71,10 @@ def train(lsm, epochs, lr, train_batch_loader, test_batch_loader):
 
             for j in range(size):
                 # Voxel shape should be 3D for input to voxelgrid_to_pointcloud
-                v_p = voxelgrid_to_pointcloud(vox_pred[j].squeeze(), num_points=int((vox_pred.shape[-1]/2)**3), thresh=0.4, mode='full', normalize=False).requires_grad_(True)
-                v = voxelgrid_to_pointcloud(vox[j].squeeze(), num_points=int((vox.shape[-1]/2)**3), thresh=0.4, mode='full', normalize=False).requires_grad_(True)
+                # v_p = voxelgrid_to_pointcloud(vox_pred[j].squeeze(), num_points=int((vox_pred.shape[-1]/2)**3), thresh=0.4, mode='full', normalize=True).requires_grad_(True)
+                # v = voxelgrid_to_pointcloud(vox[j].squeeze(), num_points=int((vox.shape[-1]/2)**3), thresh=0.4, mode='full', normalize=True).requires_grad_(True)
+                v_p = voxel_to_cloud(vox_pred[j].squeeze(), num_points=int((vox_pred.shape[-1]/2)**3), thresh=0.4)
+                v = voxel_to_cloud(vox[j].squeeze(), num_points=int((vox.shape[-1]/2)**3), thresh=0.4)
                 # print(v.shape) #should be vox_pred.shape[1]/2)**3 x 3
                 # print(v_p.shape) #should be vox.shape[1]/2)**3 x 3
                 loss += loss_func(v_p, v)
