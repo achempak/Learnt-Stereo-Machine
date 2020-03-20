@@ -193,4 +193,5 @@ class Modified3DUNet(nn.Module):
         #out = out.view(-1, self.n_classes)
         #out = self.softmax(out)
         out = torch.sigmoid(out)
+        print(out.shape)
         return out

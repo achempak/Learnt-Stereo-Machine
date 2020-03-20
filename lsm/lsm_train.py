@@ -13,10 +13,10 @@ from lsm import LSM
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 ### TRAINING PARAMETERS
-epochs = 10
+epochs = 20
 lr = 0.0001
 nvox = 32
-batch_size = 20
+batch_size = 5
 nviews = 4
 
 ### DATALOADING
@@ -26,7 +26,7 @@ split_file = './splits.json'
 
 #{'airplane': '02691156', 'bench': '02828884', 'cabinet': '02933112', 'car': '02958343', 'chair': '03001627', 'display': '03211117', 'lamp': '03636649', 'loudspeaker': '03691459', 'rifle': '04090263', 'sofa': '04256520', 'table': '04379243', 'telephone': '04401088', 'vessel': '04530566'}
 #categories = ['vessel']
-categories = None
+categories = ['bench']
 dataset = ShapeNetDataset(im_dir, vox_dir, nviews, nvox, split_file, train=True, categories=categories)
 train_batch_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size)
 test_dataset = ShapeNetDataset(im_dir, vox_dir, nviews, nvox, split_file, train=False, categories=categories)
@@ -35,7 +35,8 @@ test_batch_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_s
 ### CHECKPOINTS
 if not os.path.isdir('./checkpoints'):
     os.mkdir('./checkpoints')
-checkpoint_path = './checkpoints/experiment_{}'.format(str(int(time.time())))
+#checkpoint_path = './checkpoints/experiment_{}'.format(str(int(time.time())))
+checkpoint_path = './checkpoints/test'
 os.mkdir(checkpoint_path)
 checkpoint_file = os.path.join(checkpoint_path,'best_model.pth')
 

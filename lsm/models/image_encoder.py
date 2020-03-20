@@ -6,7 +6,7 @@ import torch.nn.functional as F
 class ImUnet(nn.Module):
     def __init__(self):
         super(ImUnet, self).__init__()
-        # todo: No batch normalization yet
+
         self.conv_1 = nn.Conv2d(in_channels=3, out_channels=32, kernel_size=3, stride=2, padding=1)
         self.conv_2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=2, padding=1)
         self.conv_3 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2, padding=1)
@@ -25,6 +25,7 @@ class ImUnet(nn.Module):
         self.deconv_bn3 = nn.BatchNorm2d(64)
 
     def forward(self, image):
+        # print(image.shape)
         x_conv_1 = self.conv_1(image)
         x_conv_2 = self.conv_2(self.conv_bn1(F.relu(x_conv_1)))
         x_conv_3 = self.conv_3(self.conv_bn2(F.relu(x_conv_2)))

@@ -12,6 +12,7 @@ import models.grid_fusion
 import models.grid_reasoning
 import models.image_encoder
 import camera.unprojection
+import models.fc_layers
 from config import SHAPENET_IM, SHAPENET_VOX
 from shapenet_pytorch import ShapeNetDataset
 
@@ -63,6 +64,10 @@ class LSM(nn.Module):
 
         # Run grid reasoning model
         self.grid_reasoning = models.grid_reasoning.Modified3DUNet(in_channels=hidden_dim[-1], n_classes=1, base_n_filter = 1).to(self.device)
+        
+        # Fc layers
+        self.fc_layers = models.fc_layers.FCLayers(in_channels=hidden_dim[-1], dim=hidden_dim[0]).to(self.device)
+
         #batch_size, in_channels, depth, height, width
         #final_grid = grid_reasoning(fused_feature_grid)
         #print("final_grid shape = ",final_grid.shape)
@@ -83,7 +88,11 @@ class LSM(nn.Module):
         proj_feats = proj_feats.view(batch_size, nviews, proj_feats.shape[2], self.grid_params[0], self.grid_params[1], self.grid_params[2])
         layer_output_list, last_state_list = self.grid_fusion(proj_feats)
         fused_feature_grid = last_state_list[0]
-        final_grid = self.grid_reasoning(fused_feature_grid)
+        # print(fused_feature_grid.shape)
+        reason_grid = self.grid_reasoning(fused_feature_grid)
+        fc_grid = self.fc_layers(fused_feature_grid)
+        final_grid = torch.max(reason_grid, fc_grid)
+        # print(final_grid.shape)
 
 
         return final_grid

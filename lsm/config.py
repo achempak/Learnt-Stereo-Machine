@@ -1,6 +1,7 @@
 import os
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+#BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = '/media/adityac/Storage/lsm/'
 
 # Shapenet config
 SHAPENET_VOX = {
