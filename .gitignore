@@ -3,3 +3,4 @@ __pycache__
 .idea
 deps
 rendering/data/
+lsm/test.py
