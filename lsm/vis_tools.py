@@ -21,12 +21,12 @@ def array_to_color(array, cmap="Oranges"):
 def plot_points(xyz, colors=None, size=0.1, axis=False, title=None, html_out=None):
     positions = xyz.reshape(-1).tolist()
 
-    Path('../figures/predict/3D/').mkdir(parents=True, exist_ok=True)
-    Path('../figures/true/3D/').mkdir(parents=True, exist_ok=True)
+    Path('./figures/predict/3D/').mkdir(parents=True, exist_ok=True)
+    Path('./figures/true/3D/').mkdir(parents=True, exist_ok=True)
     if html_out is None:
-        html_out = os.path.join('../figures/', str(uuid4())+'.html')
+        html_out = os.path.join('./figures/', str(uuid4())+'.html')
     else:
-        html_out = os.path.join('../figures/', html_out)
+        html_out = os.path.join('./figures/', html_out)
     if title is None:
         title = "PointCloud"
     camera_position = xyz.max(0) + abs(xyz.max(0))
@@ -61,7 +61,7 @@ def plot_points(xyz, colors=None, size=0.1, axis=False, title=None, html_out=Non
     return IFrame(html_out, width=1024, height=768)
 
 def plot_images(imgs, out_file=None):
-    Path('../figures/views/').mkdir(parents=True, exist_ok=True)
+    Path('./figures/views/').mkdir(parents=True, exist_ok=True)
     a,b,c,d = imgs.shape
     imgs = imgs.reshape((a,c,d,b))
     a,b,c,d = imgs.shape
@@ -73,9 +73,9 @@ def plot_images(imgs, out_file=None):
         else:
             axes[1][i-2].imshow(imgs[i,int(b/3)*2:int(b/3)*3,int(b/3)*2:int(b/3)*3,:])
     if out_file is None:
-        out_file = os.path.join('../figures/views/',str(uuid4())+'.html')
+        out_file = os.path.join('./figures/views/',str(uuid4())+'.html')
     else:
-        out_file = os.path.join('../figures/views/',out_file)
+        out_file = os.path.join('./figures/views/',out_file)
     plt.savefig(out_file)
 #def voxel_grid(voxels, thresh=0.4, cmap='viridis'):
 
