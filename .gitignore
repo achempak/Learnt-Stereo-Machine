@@ -3,3 +3,4 @@ __pycache__
 .idea
 deps
 rendering/data/
+rendering/rendering_output/
