@@ -16,5 +16,9 @@ def voxel_to_cloud(voxel: torch.Tensor, num_points: int, thresh: float = 0.4):
         point_positions.device)
     point_positions += point_displacement
 
+    # Normalize between 0 and 1
+    point_max = (point_positions + point_positions.min()).max()
+    point_positions = (point_positions + point_positions.min()) / point_max
+
     return point_positions
 

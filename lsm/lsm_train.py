@@ -7,7 +7,6 @@ import os
 import time
 
 from kaolin.metrics.point import chamfer_distance
-from kaolin.conversions.voxelgridconversions import voxelgrid_to_pointcloud
 
 from config import SHAPENET_IM, SHAPENET_VOX
 from shapenet_pytorch import ShapeNetDataset
@@ -18,7 +17,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Device: "+str(device))
 
 ### TRAINING PARAMETERS
-epochs = 30
+epochs = 20
 lr = 0.0001
 nvox = 32
 batch_size = 7
@@ -39,6 +38,7 @@ test_batch_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_s
 if not os.path.isdir('./checkpoints'):
     os.mkdir('./checkpoints')
 checkpoint_path = './checkpoints/experiment_{}'.format(str(int(time.time())))
+checkpoint_path = './checkpoints/chamfer_fail'
 os.mkdir(checkpoint_path)
 checkpoint_file = os.path.join(checkpoint_path,'best_model.pth')
 
