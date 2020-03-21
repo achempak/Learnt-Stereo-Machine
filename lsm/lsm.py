@@ -5,8 +5,8 @@ import torchvision
 
 import numpy as np
 
-import kaolin
-from kaolin.datasets import shapenet
+# import kaolin
+# from kaolin.datasets import shapenet
 
 import models.grid_fusion
 import models.grid_reasoning
