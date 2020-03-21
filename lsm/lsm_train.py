@@ -111,8 +111,8 @@ def test(test_batch_loader, lsm):
 
             size = vox_pred.shape[0]
             for j in range(size):
-                v_p = voxelgrid_to_pointcloud(vox_pred[j].squeeze(), num_points=int((vox_pred.shape[-1]/2)**3), thresh=0.4, mode='full', normalize=False).requires_grad_(True)
-                v = voxelgrid_to_pointcloud(vox[j].squeeze(), num_points=int((vox.shape[-1]/2)**3), thresh=0.4, mode='full', normalize=False).requires_grad_(True)
+                v_p = voxel_to_cloud(vox_pred[j].squeeze(), num_points=int((vox_pred.shape[-1]/2)**3), thresh=0.4)
+                v = voxel_to_cloud(vox[j].squeeze(), num_points=int((vox.shape[-1]/2)**3), thresh=0.4)
                 loss += loss_func(v_p, v)
             loss /= size
             running_loss += loss.item()
